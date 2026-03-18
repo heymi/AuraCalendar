@@ -6,7 +6,8 @@ import { motion } from "framer-motion";
 import CalendarHeader from "@/components/calendar/CalendarHeader";
 import CalendarView from "@/components/calendar/CalendarView";
 import CreateTaskModal, { ParsedResult } from "@/components/task/CreateTaskModal";
-import Sidebar from "@/components/sidebar/Sidebar";
+import MultiDayPanel from "@/components/sidebar/MultiDayPanel";
+import NotesPanel from "@/components/sidebar/NotesPanel";
 import ChatInput from "@/components/sidebar/ChatInput";
 import MobileTabBar, { MobileTab } from "@/components/MobileTabBar";
 import MobileListView from "@/components/MobileListView";
@@ -22,18 +23,21 @@ export default function Home() {
   const { highlight, clearHighlight, isHighlighted } = useHighlight();
   const [showCreate, setShowCreate] = useState(false);
   const [mobileTab, setMobileTab] = useState<MobileTab>("calendar");
+  const [collapsed, setCollapsed] = useState(true);
 
   return (
     <div className="min-h-screen w-full px-2 py-3 sm:px-4 sm:py-4 md:px-6 md:py-6 lg:px-8 lg:py-8 pb-[60px] lg:pb-0">
       <div className="flex gap-4 lg:gap-6 h-full w-full">
         {/* Calendar — always visible on desktop, tab-controlled on mobile */}
-        <div className={`flex-1 min-w-0 lg:min-w-[600px] flex flex-col ${mobileTab !== "calendar" ? "hidden lg:flex" : ""}`}>
+        <div className={`flex-1 min-w-0 lg:min-w-[480px] flex flex-col relative ${mobileTab !== "calendar" ? "hidden lg:flex" : ""}`}>
           <CalendarHeader
             year={year}
             month={month}
             onPrev={goToPrevMonth}
             onNext={goToNextMonth}
             onToday={goToToday}
+            collapsed={collapsed}
+            onToggleCollapse={() => setCollapsed((c) => !c)}
           />
 
           {loading ? (
@@ -52,21 +56,36 @@ export default function Home() {
               onUpdateStatus={updateStatus}
               onDeleteTask={deleteTask}
               onUpdateTask={updateTask}
+              collapsed={collapsed}
             />
           )}
+
+          {/* ChatInput — fixed at bottom of calendar area, desktop only */}
+          <div className="hidden lg:flex justify-center sticky bottom-0 pt-4 pb-2 z-10">
+            <div className="w-[60%] max-w-[60%] h-[200px]">
+              <ChatInput onCreateBatch={createBatch} onCreateNote={createNote} />
+            </div>
+          </div>
         </div>
 
-        {/* Sidebar — desktop only (always visible on lg+) */}
-        <div className="hidden lg:flex flex-col shrink-0 pt-0.5 gap-4 w-[340px] min-w-[300px]">
-          <Sidebar
+        {/* Multi-day tasks — desktop only */}
+        <div className="hidden lg:flex flex-col shrink-0 pt-0.5 gap-4 w-[280px] min-w-[240px]">
+          <MultiDayPanel
             tasks={tasks}
             onHighlight={highlight}
             onClearHighlight={clearHighlight}
             onUpdateTask={updateTask}
-            onDeleteTask={deleteTask}
             onUpdateStatus={updateStatus}
           />
-          <ChatInput onCreateBatch={createBatch} onCreateNote={createNote} />
+        </div>
+
+        {/* Notes — desktop only */}
+        <div className="hidden lg:flex flex-col shrink-0 pt-0.5 gap-4 w-[280px] min-w-[240px]">
+          <NotesPanel
+            tasks={tasks}
+            onUpdateTask={updateTask}
+            onDeleteTask={deleteTask}
+          />
         </div>
 
         {/* Mobile list view — only on list tab, hidden on lg+ */}

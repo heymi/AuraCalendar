@@ -18,6 +18,7 @@ interface CalendarViewProps {
   onUpdateStatus: (id: string, status: string) => Promise<void>;
   onDeleteTask: (id: string) => Promise<void>;
   onUpdateTask: (id: string, fields: Partial<Task>) => Promise<void>;
+  collapsed?: boolean;
 }
 
 const WEEKDAYS = ["一", "二", "三", "四", "五", "六", "日"];
@@ -30,6 +31,7 @@ export default function CalendarView({
   onUpdateStatus,
   onDeleteTask,
   onUpdateTask,
+  collapsed = false,
 }: CalendarViewProps) {
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const gridRef = useRef<HTMLDivElement>(null);
@@ -39,7 +41,7 @@ export default function CalendarView({
 
   const tasksByDate = useMemo(() => {
     const map: Record<string, Task[]> = {};
-    for (const task of tasks.filter((t) => t.type !== "note")) {
+    for (const task of tasks.filter((t) => t.type !== "note" && t.start_date)) {
       const start = dayjs(task.start_date);
       const end = task.end_date ? dayjs(task.end_date) : start;
       let current = start;
@@ -78,9 +80,22 @@ export default function CalendarView({
         onUpdateStatus={onUpdateStatus}
         onDeleteTask={onDeleteTask}
         onUpdateTask={onUpdateTask}
+        collapsed={collapsed}
       />
     );
   }
+
+  // Current week range (Mon–Sun) for desktop collapse
+  const currentWeekStart = useMemo(() => {
+    const d = dayjs();
+    const dow = d.day(); // 0=Sun
+    return d.subtract(dow === 0 ? 6 : dow - 1, "day").startOf("day");
+  }, []);
+  const currentWeekEnd = useMemo(() => currentWeekStart.add(6, "day"), [currentWeekStart]);
+
+  const isInCurrentWeek = (day: dayjs.Dayjs) =>
+    (day.isAfter(currentWeekStart) || day.isSame(currentWeekStart, "day"))
+    && (day.isBefore(currentWeekEnd) || day.isSame(currentWeekEnd, "day"));
 
   // Desktop: 7-column grid
   return (
@@ -111,6 +126,7 @@ export default function CalendarView({
                 tasks={tasksByDate[dateStr] || []}
                 isHighlighted={isHighlighted(dateStr)}
                 isSelected={isSelected}
+                collapsed={collapsed && !isInCurrentWeek(day)}
                 onClick={() =>
                   setSelectedDate(isSelected ? null : dateStr)
                 }

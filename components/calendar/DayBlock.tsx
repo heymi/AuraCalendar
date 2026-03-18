@@ -12,6 +12,7 @@ interface DayBlockProps {
   tasks: Task[];
   isHighlighted: boolean;
   isSelected?: boolean;
+  collapsed?: boolean;
   onClick: () => void;
 }
 
@@ -21,6 +22,7 @@ export default function DayBlock({
   tasks,
   isHighlighted,
   isSelected = false,
+  collapsed = false,
   onClick,
 }: DayBlockProps) {
   const isCurrentMonth = date.month() + 1 === currentMonth;
@@ -54,7 +56,11 @@ export default function DayBlock({
         borderWidth: today || isSelected ? 1.5 : 1,
         opacity: !isCurrentMonth ? 0.3 : isPast ? 0.55 : 1,
       }}
-      className="relative flex flex-col items-start p-2 aspect-[4/3] w-full rounded-[14px] border cursor-pointer text-left transition-colors duration-200 gap-[3px]"
+      className={`relative flex flex-col items-start w-full rounded-[14px] border cursor-pointer text-left transition-all duration-300 overflow-hidden ${
+        collapsed
+          ? "p-1 gap-[1px] aspect-[4/1.2]"
+          : "p-2 gap-[3px] aspect-[4/3.6]"
+      }`}
     >
       <span
         style={
@@ -62,12 +68,16 @@ export default function DayBlock({
             ? { background: "var(--today-bg)", color: "#fff" }
             : { color: "var(--text-primary)" }
         }
-        className="text-[13px] font-semibold w-[24px] h-[24px] flex items-center justify-center rounded-full shrink-0 tracking-[-0.01em]"
+        className={`font-semibold flex items-center justify-center rounded-full shrink-0 tracking-[-0.01em] transition-all duration-300 ${
+          collapsed
+            ? "text-[11px] w-[18px] h-[18px]"
+            : "text-[13px] w-[24px] h-[24px]"
+        }`}
       >
         {date.date()}
       </span>
 
-      {tasks.length > 0 && <TaskIconStack tasks={tasks} />}
+      {tasks.length > 0 && <TaskIconStack tasks={tasks} compact={collapsed} />}
     </motion.button>
   );
 }
