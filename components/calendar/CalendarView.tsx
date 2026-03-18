@@ -68,6 +68,14 @@ export default function CalendarView({
   const selectedTasks = selectedDate ? tasksByDate[selectedDate] || [] : [];
   const selectedNotes = selectedDate ? notesByDate[selectedDate] || [] : [];
 
+  // Current week range (Mon–Sun) for desktop collapse
+  const currentWeekStart = useMemo(() => {
+    const d = dayjs();
+    const dow = d.day(); // 0=Sun
+    return d.subtract(dow === 0 ? 6 : dow - 1, "day").startOf("day");
+  }, []);
+  const currentWeekEnd = useMemo(() => currentWeekStart.add(6, "day"), [currentWeekStart]);
+
   // Close popover on click outside (desktop only)
   useEffect(() => {
     if (!selectedDate || isMobile) return;
@@ -95,14 +103,6 @@ export default function CalendarView({
       />
     );
   }
-
-  // Current week range (Mon–Sun) for desktop collapse
-  const currentWeekStart = useMemo(() => {
-    const d = dayjs();
-    const dow = d.day(); // 0=Sun
-    return d.subtract(dow === 0 ? 6 : dow - 1, "day").startOf("day");
-  }, []);
-  const currentWeekEnd = useMemo(() => currentWeekStart.add(6, "day"), [currentWeekStart]);
 
   const isInCurrentWeek = (day: dayjs.Dayjs) =>
     (day.isAfter(currentWeekStart) || day.isSame(currentWeekStart, "day"))
