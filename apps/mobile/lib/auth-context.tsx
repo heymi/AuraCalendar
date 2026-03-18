@@ -85,20 +85,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (response?.type === "success") {
       const { code } = response.params;
       if (code) {
-        exchangeCode(code);
+        exchangeCode(code, request?.codeVerifier);
       } else {
         console.error("[Auth] No code in response params:", response.params);
       }
     }
   }, [response]);
 
-  const exchangeCode = async (code: string) => {
+  const exchangeCode = async (code: string, codeVerifier?: string) => {
     try {
       console.log("[Auth] Exchanging code with:", `${API_BASE}/api/auth/mobile`);
       const res = await fetch(`${API_BASE}/api/auth/mobile`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code }),
+        body: JSON.stringify({ code, code_verifier: codeVerifier }),
       });
       const data = await res.json();
       console.log("[Auth] Exchange response:", res.status, JSON.stringify(data));

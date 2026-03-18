@@ -10,23 +10,28 @@ const JWT_SECRET = process.env.AUTH_SECRET!;
  * and returns a JWT for subsequent API calls.
  */
 export async function POST(req: NextRequest) {
-  const { code } = await req.json();
+  const { code, code_verifier } = await req.json();
   if (!code) {
     return NextResponse.json({ error: "code required" }, { status: 400 });
   }
 
-  // Exchange code for GitHub access token
+  // Exchange code for GitHub access token (include code_verifier for PKCE)
+  const body: Record<string, string> = {
+    client_id: process.env.AUTH_GITHUB_MOBILE_ID!,
+    client_secret: process.env.AUTH_GITHUB_MOBILE_SECRET!,
+    code,
+  };
+  if (code_verifier) {
+    body.code_verifier = code_verifier;
+  }
+
   const tokenRes = await fetch("https://github.com/login/oauth/access_token", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       Accept: "application/json",
     },
-    body: JSON.stringify({
-      client_id: process.env.AUTH_GITHUB_MOBILE_ID,
-      client_secret: process.env.AUTH_GITHUB_MOBILE_SECRET,
-      code,
-    }),
+    body: JSON.stringify(body),
   });
 
   const tokenData = await tokenRes.json();
