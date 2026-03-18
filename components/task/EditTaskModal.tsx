@@ -31,7 +31,7 @@ export default function EditTaskModal({ task, onClose, onSave }: EditTaskModalPr
 
   const handleSave = async () => {
     if (!title.trim()) return;
-    if (!isNote && !startDate) return;
+    // start_date can be empty for inbox tasks
     setSaving(true);
     try {
       if (isNote) {
@@ -262,7 +262,7 @@ export default function EditTaskModal({ task, onClose, onSave }: EditTaskModalPr
             <motion.button
               whileTap={{ scale: 0.97 }}
               onClick={handleSave}
-              disabled={saving || !title.trim() || (!isNote && !startDate)}
+              disabled={saving || !title.trim()}
               style={{ background: "var(--accent)" }}
               className="flex-1 py-2.5 rounded-[12px] text-[14px] font-medium text-white disabled:opacity-40 flex items-center justify-center gap-1.5"
             >
