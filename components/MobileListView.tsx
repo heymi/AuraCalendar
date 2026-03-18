@@ -1,7 +1,8 @@
 "use client";
 
 import { Task } from "@/lib/db";
-import Sidebar from "@/components/sidebar/Sidebar";
+import MultiDayPanel from "@/components/sidebar/MultiDayPanel";
+import NotesPanel from "@/components/sidebar/NotesPanel";
 
 interface MobileListViewProps {
   tasks: Task[];
@@ -22,13 +23,17 @@ export default function MobileListView({
 }: MobileListViewProps) {
   return (
     <div className="flex flex-col gap-4 pb-[70px] max-w-[540px] mx-auto">
-      <Sidebar
+      <MultiDayPanel
         tasks={tasks}
         onHighlight={onHighlight}
         onClearHighlight={onClearHighlight}
         onUpdateTask={onUpdateTask}
-        onDeleteTask={onDeleteTask}
         onUpdateStatus={onUpdateStatus}
+      />
+      <NotesPanel
+        tasks={tasks}
+        onUpdateTask={onUpdateTask}
+        onDeleteTask={onDeleteTask}
       />
     </div>
   );

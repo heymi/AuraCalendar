@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Sparkles, Loader2, ArrowUp, X, Check, Trash2, ListChecks, StickyNote, Maximize2, Minimize2 } from "lucide-react";
+import { Loader2, ArrowUp, X, Check, Trash2, ListChecks, StickyNote, Maximize2, Minimize2, ChevronDown } from "lucide-react";
 import TaskIcon from "@/components/TaskIcon";
 import { ParsedResult } from "@/components/task/CreateTaskModal";
 
@@ -70,7 +70,11 @@ export default function ChatInput({ onCreateBatch, onCreateNote }: ChatInputProp
         setNoteExtractedTasks(data.tasks || []);
       } else {
         if (!Array.isArray(data) || data.length === 0) throw new Error("未解析到任务");
-        setParsedList(data);
+        // Task mode: create directly without confirmation
+        await onCreateBatch(input.trim(), data);
+        setInput("");
+        clearResults();
+        return;
       }
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "解析失败");
@@ -108,6 +112,10 @@ export default function ChatInput({ onCreateBatch, onCreateNote }: ChatInputProp
   };
 
   const hasParsed = parsedList.length > 0 || noteResult !== null;
+  const canSubmit = input.trim() && !parsing && !creating;
+
+  const modeLabel = mode === "task" ? "任务" : "笔记";
+  const ModeIcon = mode === "task" ? ListChecks : StickyNote;
 
   return (
     <div
@@ -116,7 +124,7 @@ export default function ChatInput({ onCreateBatch, onCreateNote }: ChatInputProp
         border: "1px solid var(--border)",
         boxShadow: "var(--shadow-sm)",
       }}
-      className="w-full rounded-[20px] p-3"
+      className="w-full rounded-[20px] p-3 flex flex-col"
     >
       {/* Parsed results */}
       <AnimatePresence>
@@ -182,7 +190,7 @@ export default function ChatInput({ onCreateBatch, onCreateNote }: ChatInputProp
                       {item.title}
                     </p>
                     <p style={{ color: "var(--text-secondary)" }} className="text-[11px] mt-0.5">
-                      {item.start_date}
+                      {item.start_date ? item.start_date : "inbox"}
                       {item.end_date && item.end_date !== item.start_date ? ` → ${item.end_date}` : ""}
                     </p>
                   </div>
@@ -218,7 +226,7 @@ export default function ChatInput({ onCreateBatch, onCreateNote }: ChatInputProp
                       {item.title}
                     </p>
                     <p style={{ color: "var(--text-secondary)" }} className="text-[11px] mt-0.5">
-                      {item.start_date}
+                      {item.start_date ? item.start_date : "inbox"}
                       {item.end_date && item.end_date !== item.start_date
                         ? ` → ${item.end_date}`
                         : ""}
@@ -267,88 +275,70 @@ export default function ChatInput({ onCreateBatch, onCreateNote }: ChatInputProp
         </p>
       )}
 
-      {/* Mode toggle */}
-      <div
-        style={{
-          background: "var(--background)",
-          border: "1px solid var(--border-subtle)",
-        }}
-        className="flex rounded-[10px] p-0.5 mb-2"
-      >
-        {([
-          { key: "task" as const, label: "任务", Icon: ListChecks },
-          { key: "note" as const, label: "笔记", Icon: StickyNote },
-        ]).map(({ key, label, Icon }) => (
-          <button
-            key={key}
-            onClick={() => {
-              setMode(key);
-              clearResults();
-              setError("");
-            }}
-            style={{
-              background: mode === key ? "var(--surface)" : "transparent",
-              color: mode === key ? "var(--text-primary)" : "var(--text-secondary)",
-              boxShadow: mode === key ? "var(--shadow-sm)" : "none",
-            }}
-            className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-[8px] text-[12px] font-medium transition-all"
-          >
-            <Icon size={13} strokeWidth={2} />
-            {label}
-          </button>
-        ))}
-      </div>
-
-      {/* Input area */}
-      <div className="flex flex-col gap-2">
-        <div className="relative">
-          <textarea
-            value={input}
-            onChange={(e) => {
-              setInput(e.target.value);
-              if (hasParsed) clearResults();
-              if (error) setError("");
-            }}
-            onKeyDown={handleKeyDown}
-            placeholder={mode === "task" ? "描述任务，AI 智能创建…" : "随手记录，AI 帮你整理…"}
-            style={{
-              background: "var(--background)",
-              border: "1px solid var(--border)",
-              color: "var(--text-primary)",
-            }}
-            className="w-full px-3 py-2.5 rounded-[14px] text-[13px] leading-[1.5] resize-none focus:outline-none transition-colors placeholder:opacity-35"
-            rows={mode === "note" ? 6 : 3}
-          />
-          {mode === "note" && (
-            <button
-              onClick={() => setFullscreen(true)}
-              style={{ color: "var(--text-tertiary)" }}
-              className="absolute top-2 right-2 p-1 rounded-[6px] hover:bg-[var(--border-subtle)] transition-colors"
-              title="全屏编辑"
-            >
-              <Maximize2 size={12} strokeWidth={2} />
-            </button>
-          )}
-        </div>
+      {/* Textarea + send button inline */}
+      <div className="relative">
+        <textarea
+          value={input}
+          onChange={(e) => {
+            setInput(e.target.value);
+            if (hasParsed) clearResults();
+            if (error) setError("");
+          }}
+          onKeyDown={handleKeyDown}
+          placeholder={mode === "task" ? "描述任务，AI 智能创建…" : "随手记录，AI 帮你整理…"}
+          style={{
+            color: "var(--text-primary)",
+          }}
+          className="w-full px-3 py-2.5 pr-11 bg-transparent text-[13px] leading-[1.5] resize-none focus:outline-none placeholder:opacity-35"
+          rows={2}
+        />
+        {/* Send button inside textarea area */}
         <motion.button
-          whileTap={{ scale: 0.97 }}
+          whileTap={{ scale: 0.85 }}
           onClick={hasParsed ? handleConfirm : handleParse}
-          disabled={!input.trim() || parsing || creating}
-          style={{ background: "var(--accent)" }}
-          className="w-full py-2.5 rounded-[12px] text-[13px] font-medium text-white disabled:opacity-30 flex items-center justify-center gap-1.5"
+          disabled={!canSubmit}
+          className="absolute right-2 bottom-2 w-[28px] h-[28px] rounded-full flex items-center justify-center transition-all disabled:opacity-20"
+          style={{
+            background: canSubmit ? "var(--text-primary)" : "var(--text-tertiary)",
+          }}
         >
           {parsing ? (
-            <>
-              <Loader2 size={14} className="animate-spin" />
-              AI 解析中…
-            </>
+            <Loader2 size={14} className="animate-spin" style={{ color: "var(--surface)" }} />
           ) : (
-            <>
-              <Sparkles size={14} strokeWidth={2} />
-              {mode === "task" ? "AI 智能创建" : "AI 智能整理"}
-            </>
+            <ArrowUp size={14} strokeWidth={2.5} style={{ color: "var(--surface)" }} />
           )}
         </motion.button>
+        {/* Fullscreen button for note mode */}
+        {mode === "note" && (
+          <button
+            onClick={() => setFullscreen(true)}
+            style={{ color: "var(--text-tertiary)" }}
+            className="absolute right-11 bottom-2.5 p-1 rounded-[6px] hover:bg-[var(--border-subtle)] transition-colors"
+            title="全屏编辑"
+          >
+            <Maximize2 size={12} strokeWidth={2} />
+          </button>
+        )}
+      </div>
+
+      {/* Bottom toolbar: mode toggle */}
+      <div
+        className="flex items-center gap-1 pt-1 px-1"
+        style={{ borderTop: "1px solid var(--border-subtle)" }}
+      >
+        <button
+          onClick={() => {
+            setMode(mode === "task" ? "note" : "task");
+            clearResults();
+            setError("");
+          }}
+          className="flex items-center gap-1 px-2 py-1 rounded-[8px] text-[12px] font-medium hover:bg-[var(--border-subtle)] transition-colors"
+          style={{ color: "var(--text-secondary)" }}
+        >
+          <ModeIcon size={13} strokeWidth={2} />
+          {modeLabel}
+          <ChevronDown size={11} strokeWidth={2} />
+        </button>
       </div>
 
       {/* Fullscreen note editor */}
@@ -445,7 +435,6 @@ export default function ChatInput({ onCreateBatch, onCreateNote }: ChatInputProp
                     </>
                   ) : (
                     <>
-                      <Sparkles size={14} strokeWidth={2} />
                       AI 智能整理
                     </>
                   )}

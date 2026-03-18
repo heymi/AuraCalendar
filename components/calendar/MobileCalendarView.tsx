@@ -17,6 +17,7 @@ interface MobileCalendarViewProps {
   onUpdateStatus: (id: string, status: string) => Promise<void>;
   onDeleteTask: (id: string) => Promise<void>;
   onUpdateTask: (id: string, fields: Partial<Task>) => Promise<void>;
+  collapsed: boolean;
 }
 
 const PAGE_SIZE = 7;
@@ -28,6 +29,7 @@ export default function MobileCalendarView({
   onUpdateStatus,
   onDeleteTask,
   onUpdateTask,
+  collapsed,
 }: MobileCalendarViewProps) {
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [pastCount, setPastCount] = useState(2);
@@ -42,6 +44,14 @@ export default function MobileCalendarView({
   // Show "back to today" when today is not visible
   const [showBackToToday, setShowBackToToday] = useState(false);
 
+  // Current week range (Mon–Sun)
+  const currentWeekStart = useMemo(() => {
+    const d = dayjs();
+    const dow = d.day(); // 0=Sun
+    return d.subtract(dow === 0 ? 6 : dow - 1, "day").startOf("day");
+  }, []);
+  const currentWeekEnd = useMemo(() => currentWeekStart.add(6, "day"), [currentWeekStart]);
+
   // Generate day range: (today - pastCount) to (today + futureCount)
   const today = useMemo(() => dayjs().startOf("day"), []);
   const days = useMemo(() => {
@@ -55,7 +65,7 @@ export default function MobileCalendarView({
   // Build task map
   const tasksByDate = useMemo(() => {
     const map: Record<string, Task[]> = {};
-    for (const task of tasks.filter((t) => t.type !== "note")) {
+    for (const task of tasks.filter((t) => t.type !== "note" && t.start_date)) {
       const start = dayjs(task.start_date);
       const end = task.end_date ? dayjs(task.end_date) : start;
       let current = start;
@@ -137,6 +147,9 @@ export default function MobileCalendarView({
         const dayTasks = tasksByDate[dateStr] || [];
         const isPast = !isTodayDay && day.isBefore(dayjs(), "day");
         const highlighted = isHighlighted(dateStr);
+        const isCurrentWeek = (day.isAfter(currentWeekStart) || day.isSame(currentWeekStart, "day"))
+          && (day.isBefore(currentWeekEnd) || day.isSame(currentWeekEnd, "day"));
+        const isCollapsedCard = collapsed && !isCurrentWeek;
 
         // Month boundary label
         const showMonthLabel = day.date() === 1;
@@ -169,18 +182,22 @@ export default function MobileCalendarView({
                 borderWidth: isTodayDay ? 1.5 : 1,
                 opacity: isPast ? 0.55 : 1,
               }}
-              className="relative w-full min-h-[calc((100vw-16px)*3/16)] max-h-[calc((100vw-16px)*3/8)] rounded-[14px] border p-3 flex gap-3 text-left cursor-pointer transition-colors duration-200"
+              className={`relative w-full rounded-[14px] border flex gap-3 text-left cursor-pointer transition-all duration-300 ${
+                isCollapsedCard
+                  ? "min-h-[calc((100vw-16px)*3/40)] max-h-[calc((100vw-16px)*3/20)] p-2 overflow-hidden"
+                  : "min-h-[calc((100vw-16px)*3/16)] max-h-[calc((100vw-16px)*3/8)] p-3"
+              }`}
             >
               {/* Left: date info */}
-              <div className="flex flex-col items-center shrink-0 w-[52px]">
+              <div className={`flex flex-col items-center shrink-0 ${isCollapsedCard ? "w-[40px]" : "w-[52px]"} transition-all duration-300`}>
                 <span
-                  className="text-[10px] font-medium tracking-wide"
+                  className={`font-medium tracking-wide ${isCollapsedCard ? "text-[9px]" : "text-[10px]"}`}
                   style={{ color: isTodayDay ? "var(--accent)" : "var(--text-secondary)" }}
                 >
                   {WEEKDAY_LABELS[day.day()]}
                 </span>
                 <span
-                  className="text-[28px] font-semibold leading-none mt-0.5 tracking-[-0.02em]"
+                  className={`font-semibold leading-none mt-0.5 tracking-[-0.02em] ${isCollapsedCard ? "text-[18px]" : "text-[28px]"} transition-all duration-300`}
                   style={
                     isTodayDay
                       ? { color: "var(--accent)" }
@@ -189,7 +206,7 @@ export default function MobileCalendarView({
                 >
                   {day.date()}
                 </span>
-                {isTodayDay && (
+                {isTodayDay && !isCollapsedCard && (
                   <span
                     className="text-[9px] font-semibold mt-1 px-1.5 py-0.5 rounded-full"
                     style={{ background: "var(--accent)", color: "#fff" }}
@@ -209,7 +226,8 @@ export default function MobileCalendarView({
               {(() => {
                 const singleDay = dayTasks.filter((t) => !t.end_date || t.end_date === t.start_date);
                 const multiDay = dayTasks.filter((t) => t.end_date && t.end_date !== t.start_date);
-                const maxVisible = 4;
+                const maxVisible = isCollapsedCard ? 2 : 4;
+                const iconSize = isCollapsedCard ? 16 : 20;
                 const visibleSingle = singleDay.slice(0, maxVisible);
                 const overflow = singleDay.length - maxVisible;
 
@@ -217,11 +235,25 @@ export default function MobileCalendarView({
                   <div className="flex-1 min-w-0 flex flex-col gap-1 overflow-hidden">
                     {dayTasks.length === 0 ? (
                       <span
-                        className="text-[11px] mt-1"
+                        className={`mt-1 ${isCollapsedCard ? "text-[10px]" : "text-[11px]"}`}
                         style={{ color: "var(--text-tertiary)" }}
                       >
                         暂无任务
                       </span>
+                    ) : isCollapsedCard ? (
+                      /* Collapsed: icons only, horizontal */
+                      <div className="flex flex-wrap items-center gap-1">
+                        {dayTasks.slice(0, 6).map((task) => (
+                          <span key={task.id} style={{ opacity: task.status === "completed" ? 0.4 : 1 }}>
+                            <TaskIcon icon={task.icon} color={task.icon_color} size={iconSize} />
+                          </span>
+                        ))}
+                        {dayTasks.length > 6 && (
+                          <span className="text-[9px] font-semibold" style={{ color: "var(--text-secondary)" }}>
+                            +{dayTasks.length - 6}
+                          </span>
+                        )}
+                      </div>
                     ) : (
                       <>
                         {/* Single-day: icon + title */}
@@ -233,7 +265,7 @@ export default function MobileCalendarView({
                               className="flex items-center gap-1.5 min-w-0"
                               style={{ opacity: done ? 0.5 : 1 }}
                             >
-                              <TaskIcon icon={task.icon} color={task.icon_color} size={20} />
+                              <TaskIcon icon={task.icon} color={task.icon_color} size={iconSize} />
                               <span
                                 className="text-[12px] font-medium leading-tight truncate"
                                 style={{
@@ -259,7 +291,7 @@ export default function MobileCalendarView({
                           <div className="flex flex-wrap items-center gap-1">
                             {multiDay.map((task) => (
                               <span key={task.id} style={{ opacity: task.status === "completed" ? 0.4 : 1 }}>
-                                <TaskIcon icon={task.icon} color={task.icon_color} size={20} />
+                                <TaskIcon icon={task.icon} color={task.icon_color} size={iconSize} />
                               </span>
                             ))}
                           </div>

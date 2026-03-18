@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronLeft, ChevronRight, Sun, Moon, Monitor, LogOut } from "lucide-react";
+import { ChevronLeft, ChevronRight, Sun, Moon, Monitor, LogOut, ChevronsUpDown, ChevronsDownUp } from "lucide-react";
 import { useTheme } from "@/providers/ThemeProvider";
 import { useSession, signOut } from "next-auth/react";
 
@@ -12,6 +12,8 @@ interface CalendarHeaderProps {
   onPrev: () => void;
   onNext: () => void;
   onToday: () => void;
+  collapsed?: boolean;
+  onToggleCollapse?: () => void;
 }
 
 const monthNames = [
@@ -25,6 +27,8 @@ export default function CalendarHeader({
   onPrev,
   onNext,
   onToday,
+  collapsed,
+  onToggleCollapse,
 }: CalendarHeaderProps) {
   const { mode, resolved, setMode } = useTheme();
   const { data: session } = useSession();
@@ -70,6 +74,18 @@ export default function CalendarHeader({
         >
           今天
         </button>
+
+        {/* Collapse toggle — mobile only */}
+        {onToggleCollapse && (
+          <button
+            onClick={onToggleCollapse}
+            style={{ color: collapsed ? "var(--accent)" : "var(--text-secondary)" }}
+            className="p-1.5 rounded-xl hover:opacity-70 transition-opacity"
+            title={collapsed ? "展开全部" : "折叠非本周"}
+          >
+            {collapsed ? <ChevronsUpDown size={16} strokeWidth={2} /> : <ChevronsDownUp size={16} strokeWidth={2} />}
+          </button>
+        )}
 
         {/* Month nav */}
         {[onPrev, onNext].map((fn, i) => (

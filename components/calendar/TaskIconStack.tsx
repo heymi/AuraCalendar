@@ -6,15 +6,14 @@ import TaskIcon from "@/components/TaskIcon";
 
 interface TaskIconStackProps {
   tasks: Task[];
+  compact?: boolean;
 }
 
 function isMultiDay(task: Task) {
   return task.end_date != null && task.end_date !== task.start_date;
 }
 
-export default function TaskIconStack({ tasks }: TaskIconStackProps) {
-  const maxSingle = 3;
-
+export default function TaskIconStack({ tasks, compact = false }: TaskIconStackProps) {
   const sorted = useMemo(
     () => [...tasks].filter((t) => t.type !== "note").sort((a, b) => (a.created_at > b.created_at ? 1 : -1)),
     [tasks]
@@ -23,6 +22,28 @@ export default function TaskIconStack({ tasks }: TaskIconStackProps) {
   const multiDayTasks = sorted.filter(isMultiDay);
   const singleDayTasks = sorted.filter((t) => !isMultiDay(t));
 
+  // Compact: all icons horizontal, no text
+  if (compact) {
+    const all = sorted.slice(0, 6);
+    const overflow = sorted.length - 6;
+    return (
+      <div className="flex flex-wrap items-center gap-[2px] w-full overflow-hidden">
+        {all.map((task) => (
+          <span key={task.id} style={{ opacity: task.status === "completed" ? 0.4 : 1 }}>
+            <TaskIcon icon={task.icon} color={task.icon_color} size={14} />
+          </span>
+        ))}
+        {overflow > 0 && (
+          <span style={{ color: "var(--text-secondary)", fontSize: 8, fontWeight: 600, lineHeight: 1 }}>
+            +{overflow}
+          </span>
+        )}
+      </div>
+    );
+  }
+
+  // Normal mode
+  const maxSingle = 3;
   const visibleSingle = singleDayTasks.slice(0, maxSingle);
   const overflow = singleDayTasks.length - maxSingle;
 
