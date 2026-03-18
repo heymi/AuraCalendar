@@ -11,8 +11,8 @@ export function useTasks(monthKey: string) {
     try {
       const data = await api.fetchTasks(monthKey);
       setTasks(Array.isArray(data) ? data : []);
-    } catch {
-      console.error("Failed to fetch tasks");
+    } catch (err) {
+      console.error("Failed to fetch tasks:", err);
     } finally {
       if (!initialized.current) {
         initialized.current = true;

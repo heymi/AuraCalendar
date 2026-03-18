@@ -50,6 +50,28 @@
 - 列表 stagger：`delay: i * 0.04`
 - 状态过渡：只用颜色，不用位移
 
+### iOS 原生导航（Tab Bar）实现规范
+
+所有 iOS 移动端开发中的底部导航都必须遵循此模式：
+
+**结构：单个 GlassView 包裹所有 tab**
+- 用一个 `GlassView`（`expo-glass-effect`）作为整个导航条，`glassEffectStyle="regular"` + `isInteractive`
+- Tab 按钮是里面的普通 `Pressable`，不要给每个 tab 单独包 `GlassView`
+- 不要用 `GlassContainer` + 背景 `GlassView` 的多层结构
+
+**选中态：半透明灰色药丸**
+- 选中 tab 用 `backgroundColor: "rgba(120, 120, 128, 0.15)"` + `borderRadius: 22`
+- 不要用白色 `'regular'` 玻璃效果来表示选中
+
+**按压态：原生液态玻璃**
+- `isInteractive` 放在外层 `GlassView` 上，按压时系统自动提供液态玻璃扩散效果
+
+**禁止的做法：**
+- ❌ 每个 tab 各自用 `GlassView` / `AnimatedGlassView`
+- ❌ 用 `animatedProps` 传 `opacity` 控制玻璃显隐
+- ❌ 在 `'regular'` 和 `'none'` 之间切换 `glassEffectStyle`（离散切换，动画生硬）
+- ❌ 额外的背景 `GlassView`（导致白色不透明背景）
+
 ## Tech Notes
 - DB 文件在 `/data/aura.db`（已 gitignore）
 - API Key 在 `.env.local`（已 gitignore）
