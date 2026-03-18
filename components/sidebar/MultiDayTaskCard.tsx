@@ -13,6 +13,7 @@ interface MultiDayTaskCardProps {
   onLeave: () => void;
   onEdit: (task: Task) => void;
   onUpdateStatus: (id: string, status: string) => Promise<void>;
+  layoutPrefix?: string;
 }
 
 const STATUS_CYCLE: Record<string, string> = {
@@ -48,6 +49,7 @@ export default function MultiDayTaskCard({
   onLeave,
   onEdit,
   onUpdateStatus,
+  layoutPrefix = "sidebar",
 }: MultiDayTaskCardProps) {
   const [cycling, setCycling] = useState(false);
   const cfg = STATUS_CONFIG[task.status];
@@ -75,6 +77,8 @@ export default function MultiDayTaskCard({
 
   return (
     <motion.div
+      layout
+      layoutId={`task-card-${layoutPrefix}-${task.id}`}
       initial={{ opacity: 0, x: 8 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ type: "spring", stiffness: 380, damping: 30 }}
@@ -115,7 +119,7 @@ export default function MultiDayTaskCard({
       </motion.button>
 
       {/* Category icon */}
-      <TaskIcon icon={task.icon} color={task.icon_color} size={24} />
+      <TaskIcon icon={task.icon} color={task.icon_color} size={24} done={task.status === "completed"} />
 
       <div className="flex-1 min-w-0">
         <p

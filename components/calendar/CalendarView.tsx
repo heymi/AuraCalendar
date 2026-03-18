@@ -55,7 +55,18 @@ export default function CalendarView({
     return map;
   }, [tasks]);
 
+  const notesByDate = useMemo(() => {
+    const map: Record<string, Task[]> = {};
+    for (const note of tasks.filter((t) => t.type === "note")) {
+      const key = dayjs(note.created_at).format("YYYY-MM-DD");
+      if (!map[key]) map[key] = [];
+      map[key].push(note);
+    }
+    return map;
+  }, [tasks]);
+
   const selectedTasks = selectedDate ? tasksByDate[selectedDate] || [] : [];
+  const selectedNotes = selectedDate ? notesByDate[selectedDate] || [] : [];
 
   // Close popover on click outside (desktop only)
   useEffect(() => {
@@ -101,7 +112,7 @@ export default function CalendarView({
   return (
     <div>
       {/* Weekday header */}
-      <div className="grid grid-cols-7 gap-2 mb-2">
+      <div className="grid grid-cols-7 gap-[13px] mb-2">
         {WEEKDAYS.map((d) => (
           <div
             key={d}
@@ -114,7 +125,7 @@ export default function CalendarView({
       </div>
 
       {/* Day grid */}
-      <div ref={gridRef} className="grid grid-cols-7 gap-2">
+      <div ref={gridRef} className="grid grid-cols-7 gap-[13px]">
         {days.map((day) => {
           const dateStr = day.format("YYYY-MM-DD");
           const isSelected = selectedDate === dateStr;
@@ -137,6 +148,7 @@ export default function CalendarView({
                   <DayDetailPopover
                     date={selectedDate}
                     tasks={selectedTasks}
+                    notes={selectedNotes}
                     onClose={() => setSelectedDate(null)}
                     onUpdateStatus={onUpdateStatus}
                     onDeleteTask={onDeleteTask}

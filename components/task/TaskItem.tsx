@@ -68,15 +68,9 @@ export default function TaskItem({ task, onUpdateStatus, onDelete, onEdit }: Tas
       className="flex items-center gap-2.5 px-3 py-2.5 rounded-[12px] group"
     >
       {isNote ? (
-        /* Note: single yellow icon */
         <span
           className="flex items-center justify-center shrink-0"
-          style={{
-            width: 24,
-            height: 24,
-            borderRadius: 6,
-            background: NOTE_COLOR,
-          }}
+          style={{ width: 24, height: 24, borderRadius: 6, background: NOTE_COLOR }}
         >
           <StickyNote size={13} color="white" strokeWidth={2} />
         </span>
@@ -109,7 +103,7 @@ export default function TaskItem({ task, onUpdateStatus, onDelete, onEdit }: Tas
           </motion.button>
 
           {/* Category icon */}
-          <TaskIcon icon={task.icon} color={task.icon_color} size={24} />
+          <TaskIcon icon={task.icon} color={task.icon_color} size={24} done={task.status === "completed"} />
         </>
       )}
 

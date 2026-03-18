@@ -9,7 +9,6 @@ import { ParsedResult } from "@/components/task/CreateTaskModal";
 interface NoteResult {
   title: string;
   content: string;
-  category: string;
   icon: string;
   icon_color: string;
 }
@@ -120,7 +119,9 @@ export default function ChatInput({ onCreateBatch, onCreateNote }: ChatInputProp
   return (
     <div
       style={{
-        background: "var(--surface)",
+        background: "color-mix(in srgb, var(--surface) 55%, transparent)",
+        backdropFilter: "blur(40px) saturate(180%)",
+        WebkitBackdropFilter: "blur(40px) saturate(180%)",
         border: "1px solid var(--border)",
         boxShadow: "var(--shadow-sm)",
       }}
@@ -184,7 +185,7 @@ export default function ChatInput({ onCreateBatch, onCreateNote }: ChatInputProp
                   }}
                   className="flex items-center gap-2.5 px-2.5 py-2 rounded-[12px]"
                 >
-                  <TaskIcon icon={item.category} color={item.icon_color} size={24} />
+                  <TaskIcon icon={item.icon} color={item.icon_color} size={24} />
                   <div className="flex-1 min-w-0">
                     <p style={{ color: "var(--text-primary)" }} className="text-[13px] font-medium leading-tight truncate">
                       {item.title}
@@ -217,7 +218,7 @@ export default function ChatInput({ onCreateBatch, onCreateNote }: ChatInputProp
                   }}
                   className="flex items-center gap-2.5 px-2.5 py-2 rounded-[12px]"
                 >
-                  <TaskIcon icon={item.category} color={item.icon_color} size={24} />
+                  <TaskIcon icon={item.icon} color={item.icon_color} size={24} />
                   <div className="flex-1 min-w-0">
                     <p
                       style={{ color: "var(--text-primary)" }}
@@ -355,8 +356,6 @@ export default function ChatInput({ onCreateBatch, onCreateNote }: ChatInputProp
               className="absolute inset-0"
               style={{
                 background: "rgba(0,0,0,0.24)",
-                backdropFilter: "blur(12px)",
-                WebkitBackdropFilter: "blur(12px)",
               }}
               onClick={() => setFullscreen(false)}
             />

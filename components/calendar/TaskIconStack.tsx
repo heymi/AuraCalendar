@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { Task } from "@/lib/db";
 import TaskIcon from "@/components/TaskIcon";
 
@@ -15,7 +15,12 @@ function isMultiDay(task: Task) {
 
 export default function TaskIconStack({ tasks, compact = false }: TaskIconStackProps) {
   const sorted = useMemo(
-    () => [...tasks].filter((t) => t.type !== "note").sort((a, b) => (a.created_at > b.created_at ? 1 : -1)),
+    () => [...tasks].filter((t) => t.type !== "note").sort((a, b) => {
+      const aDone = a.status === "completed" ? 1 : 0;
+      const bDone = b.status === "completed" ? 1 : 0;
+      if (aDone !== bDone) return aDone - bDone;
+      return a.created_at > b.created_at ? 1 : -1;
+    }),
     [tasks]
   );
 
@@ -29,8 +34,8 @@ export default function TaskIconStack({ tasks, compact = false }: TaskIconStackP
     return (
       <div className="flex flex-wrap items-center gap-[2px] w-full overflow-hidden">
         {all.map((task) => (
-          <span key={task.id} style={{ opacity: task.status === "completed" ? 0.4 : 1 }}>
-            <TaskIcon icon={task.icon} color={task.icon_color} size={14} />
+          <span key={task.id}>
+            <TaskIcon icon={task.icon} color={task.icon_color} size={14} done={task.status === "completed"} />
           </span>
         ))}
         {overflow > 0 && (
@@ -48,7 +53,7 @@ export default function TaskIconStack({ tasks, compact = false }: TaskIconStackP
   const overflow = singleDayTasks.length - maxSingle;
 
   return (
-    <div className="flex flex-col gap-[3px] w-full overflow-hidden">
+    <div className="flex flex-col gap-[3px] w-full overflow-hidden flex-1">
       {/* Single-day: icon + title, one per row */}
       {visibleSingle.map((task) => {
         const done = task.status === "completed";
@@ -56,16 +61,12 @@ export default function TaskIconStack({ tasks, compact = false }: TaskIconStackP
           <div
             key={task.id}
             className="flex items-center gap-1 px-[3px] py-[2px] rounded-[6px] min-w-0"
-            style={{
-              background: `${task.icon_color}${done ? "0c" : "18"}`,
-              opacity: done ? 0.5 : 1,
-            }}
           >
-            <TaskIcon icon={task.icon} color={task.icon_color} size={20} />
+            <TaskIcon icon={task.icon} color={task.icon_color} size={20} done={done} />
             <span
               className="text-[10px] font-medium leading-tight truncate"
               style={{
-                color: task.icon_color,
+                color: "#999",
                 textDecoration: done ? "line-through" : "none",
               }}
             >
@@ -87,20 +88,50 @@ export default function TaskIconStack({ tasks, compact = false }: TaskIconStackP
         </span>
       )}
 
-      {/* Multi-day: icons only, horizontal row */}
+      {/* Multi-day: icons stacked, spread on hover */}
       {multiDayTasks.length > 0 && (
-        <div className="flex flex-wrap items-center px-[3px]" style={{ gap: 3 }}>
-          {multiDayTasks.map((task) => (
-            <span key={task.id} style={{ opacity: task.status === "completed" ? 0.4 : 1 }}>
-              <TaskIcon
-                icon={task.icon}
-                color={task.icon_color}
-                size={20}
-              />
-            </span>
-          ))}
-        </div>
+        <MultiDayStack tasks={multiDayTasks} />
       )}
+    </div>
+  );
+}
+
+function MultiDayStack({ tasks }: { tasks: Task[] }) {
+  const [hovered, setHovered] = useState(false);
+
+  // Incomplete first, completed last
+  const sorted = useMemo(
+    () => [...tasks].sort((a, b) => {
+      const aDone = a.status === "completed" ? 1 : 0;
+      const bDone = b.status === "completed" ? 1 : 0;
+      return aDone - bDone;
+    }),
+    [tasks]
+  );
+
+  return (
+    <div
+      className="flex items-center justify-center px-[3px] mt-auto"
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+    >
+      {sorted.map((task, i) => (
+        <span
+          key={task.id}
+          style={{
+            marginLeft: i === 0 ? 0 : hovered ? 3 : -8,
+            zIndex: sorted.length - i,
+            transition: "margin-left 0.25s cubic-bezier(0.34, 1.56, 0.64, 1)",
+          }}
+        >
+          <TaskIcon
+            icon={task.icon}
+            color={task.icon_color}
+            size={24}
+            done={task.status === "completed"}
+          />
+        </span>
+      ))}
     </div>
   );
 }
