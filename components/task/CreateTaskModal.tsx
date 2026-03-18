@@ -85,7 +85,12 @@ export default function CreateTaskModal({
         setNoteExtractedTasks(data.tasks || []);
       } else {
         if (!Array.isArray(data) || data.length === 0) throw new Error("未解析到任务");
-        setParsedList(data);
+        // Task mode: create directly without confirmation
+        await onCreateBatch(input.trim(), data);
+        setInput("");
+        clearResults();
+        onClose();
+        return;
       }
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "解析失败");
@@ -338,7 +343,7 @@ export default function CreateTaskModal({
                             {item.title}
                           </p>
                           <p style={{ color: "var(--text-secondary)" }} className="text-[11px] mt-0.5">
-                            {item.start_date}
+                            {item.start_date ? item.start_date : "inbox"}
                             {item.end_date && item.end_date !== item.start_date ? ` → ${item.end_date}` : ""}
                           </p>
                         </div>
@@ -374,7 +379,7 @@ export default function CreateTaskModal({
                             {item.title}
                           </p>
                           <p style={{ color: "var(--text-secondary)" }} className="text-[11px] mt-0.5">
-                            {item.start_date}
+                            {item.start_date ? item.start_date : "inbox"}
                             {item.end_date && item.end_date !== item.start_date
                               ? ` → ${item.end_date}`
                               : ""}

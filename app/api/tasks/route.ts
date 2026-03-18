@@ -22,7 +22,10 @@ export async function GET(req: NextRequest) {
 
   const result = await db.execute({
     sql: `SELECT * FROM tasks
-          WHERE user_id = ? AND start_date <= ? AND (end_date >= ? OR (end_date IS NULL AND start_date >= ?))
+          WHERE user_id = ? AND (
+            start_date = ''
+            OR (start_date <= ? AND (end_date >= ? OR (end_date IS NULL AND start_date >= ?)))
+          )
           ORDER BY start_date ASC`,
     args: [userId, endOfMonth, startOfMonth, startOfMonth],
   });
@@ -55,7 +58,7 @@ export async function POST(req: NextRequest) {
     original_input: input || null,
     icon: isNote ? "note" : parsed.category,
     icon_color: isNote ? "#F59E0B" : style!.color,
-    start_date: parsed.start_date || dayjs().format("YYYY-MM-DD"),
+    start_date: parsed.start_date || "",
     end_date: parsed.end_date || null,
     notes: isNote ? (parsed.content || "") : "",
     status: isNote ? "completed" : "pending",
