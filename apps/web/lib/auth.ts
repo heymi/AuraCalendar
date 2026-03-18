@@ -10,8 +10,9 @@ const JWT_SECRET = process.env.AUTH_SECRET!;
  * Returns userId string or a 401 NextResponse.
  */
 export async function getAuthUserId(): Promise<string | NextResponse> {
-  // Try Bearer token first (mobile)
   const headersList = await headers();
+
+  // Try Bearer token first (mobile)
   const authorization = headersList.get("authorization");
   if (authorization?.startsWith("Bearer ")) {
     const token = authorization.slice(7);
@@ -19,7 +20,7 @@ export async function getAuthUserId(): Promise<string | NextResponse> {
       const payload = jwt.verify(token, JWT_SECRET) as { userId: string };
       if (payload.userId) return payload.userId;
     } catch {
-      // Invalid token, fall through to session check
+      return NextResponse.json({ error: "Invalid token" }, { status: 401 });
     }
   }
 
