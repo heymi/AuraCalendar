@@ -1,0 +1,17 @@
+{
+  "name": "@aura/shared",
+  "version": "0.0.1",
+  "private": true,
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./types": "./src/types.ts",
+    "./utils": "./src/utils.ts",
+    "./icons": "./src/icons.ts",
+    "./api-client": "./src/api-client.ts"
+  },
+  "dependencies": {
+    "dayjs": "^1.11.20"
+  }
+}

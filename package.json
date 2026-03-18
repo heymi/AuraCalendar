@@ -1,36 +1,19 @@
 {
-  "name": "aura-temp",
-  "version": "0.1.0",
+  "name": "aura-calendar",
   "private": true,
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "eslint"
-  },
-  "dependencies": {
-    "@libsql/client": "^0.17.0",
-    "better-sqlite3": "^12.8.0",
-    "dayjs": "^1.11.20",
-    "framer-motion": "^12.38.0",
-    "lucide-react": "^0.577.0",
-    "next": "16.1.7",
-    "next-auth": "^5.0.0-beta.30",
-    "react": "19.2.3",
-    "react-dom": "19.2.3",
-    "react-markdown": "^10.1.0",
-    "uuid": "^13.0.0"
+    "dev": "turbo dev",
+    "build": "turbo build",
+    "lint": "turbo lint"
   },
   "devDependencies": {
-    "@tailwindcss/postcss": "^4",
-    "@types/better-sqlite3": "^7.6.13",
-    "@types/node": "^20",
-    "@types/react": "^19",
-    "@types/react-dom": "^19",
-    "@types/uuid": "^10.0.0",
-    "eslint": "^9",
-    "eslint-config-next": "16.1.7",
-    "tailwindcss": "^4",
-    "typescript": "^5"
+    "turbo": "^2"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "better-sqlite3",
+      "sharp",
+      "unrs-resolver"
+    ]
   }
 }
