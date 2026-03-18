@@ -9,7 +9,6 @@ export interface ParsedResult {
   title: string;
   start_date: string;
   end_date: string | null;
-  category: string;
   icon: string;
   icon_color: string;
 }
@@ -17,7 +16,6 @@ export interface ParsedResult {
 interface NoteResult {
   title: string;
   content: string;
-  category: string;
   icon: string;
   icon_color: string;
 }
@@ -140,8 +138,6 @@ export default function CreateTaskModal({
             className="absolute inset-0"
             style={{
               background: "rgba(0,0,0,0.22)",
-              backdropFilter: "blur(10px)",
-              WebkitBackdropFilter: "blur(10px)",
             }}
             onClick={handleClose}
           />
@@ -337,7 +333,7 @@ export default function CreateTaskModal({
                         }}
                         className="flex items-center gap-3 px-3 py-2.5 rounded-[12px]"
                       >
-                        <TaskIcon icon={item.category} color={item.icon_color} size={28} />
+                        <TaskIcon icon={item.icon} color={item.icon_color} size={28} />
                         <div className="flex-1 min-w-0">
                           <p style={{ color: "var(--text-primary)" }} className="text-[13px] font-medium leading-tight tracking-[-0.01em]">
                             {item.title}
@@ -370,7 +366,7 @@ export default function CreateTaskModal({
                         }}
                         className="flex items-center gap-3 px-3 py-2.5 rounded-[12px]"
                       >
-                        <TaskIcon icon={item.category} color={item.icon_color} size={28} />
+                        <TaskIcon icon={item.icon} color={item.icon_color} size={28} />
                         <div className="flex-1 min-w-0">
                           <p
                             style={{ color: "var(--text-primary)" }}
@@ -443,8 +439,6 @@ export default function CreateTaskModal({
                   className="absolute inset-0"
                   style={{
                     background: "rgba(0,0,0,0.3)",
-                    backdropFilter: "blur(16px)",
-                    WebkitBackdropFilter: "blur(16px)",
                   }}
                   onClick={() => setFullscreen(false)}
                 />

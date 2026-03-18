@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDB, initDB } from "@/lib/db";
-import { getCategoryStyle } from "@/lib/icons";
 import { getAuthUserId } from "@/lib/auth";
 import dayjs from "dayjs";
 
@@ -35,13 +34,6 @@ export async function PATCH(
       sets.push(`${key} = ?`);
       vals.push(body[key]);
     }
-  }
-
-  // If icon (category) changed, also update icon_color
-  if ("icon" in body && !("icon_color" in body)) {
-    const style = getCategoryStyle(body.icon);
-    sets.push("icon_color = ?");
-    vals.push(style.color);
   }
 
   if (sets.length === 0) {

@@ -156,8 +156,6 @@ export default function NoteDetailModal({ note, onClose, onDelete, onSave }: Not
           className="absolute inset-0"
           style={{
             background: "rgba(0,0,0,0.24)",
-            backdropFilter: "blur(12px)",
-            WebkitBackdropFilter: "blur(12px)",
           }}
           onClick={onClose}
         />

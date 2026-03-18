@@ -2,10 +2,10 @@
 
 import { useMemo, useState } from "react";
 import { StickyNote } from "lucide-react";
-import { motion } from "framer-motion";
-import dayjs from "dayjs";
 import { Task } from "@/lib/db";
 import NoteDetailModal from "@/components/task/NoteDetailModal";
+import ListModal from "@/components/ui/ListModal";
+import NoteCard from "./NoteCard";
 
 interface NotesPanelProps {
   tasks: Task[];
@@ -26,6 +26,11 @@ export default function NotesPanel({
   );
 
   const [viewingNote, setViewingNote] = useState<Task | null>(null);
+  const [showAll, setShowAll] = useState(false);
+
+  const PREVIEW_LIMIT = 4;
+  const hasMore = notes.length > PREVIEW_LIMIT;
+  const previewNotes = hasMore ? notes.slice(0, PREVIEW_LIMIT) : notes;
 
   return (
     <>
@@ -61,51 +66,32 @@ export default function NotesPanel({
             暂无笔记
           </p>
         ) : (
-          <div className="flex flex-col gap-1.5 max-h-[480px] overflow-y-auto">
-            {notes.map((note) => (
-              <motion.div
-                key={note.id}
-                initial={{ opacity: 0, x: 8 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ type: "spring", stiffness: 380, damping: 30 }}
-                whileHover={{ scale: 1.015 }}
-                onClick={() => setViewingNote(note)}
-                style={{
-                  background: "var(--surface)",
-                  border: "1px solid var(--border-subtle)",
-                }}
-                className="flex items-start gap-2.5 px-3 py-2.5 rounded-[14px] cursor-pointer transition-shadow hover:shadow-[var(--shadow-sm)]"
+          <>
+            <div className="grid grid-cols-2 gap-2.5 pb-2">
+              {previewNotes.map((note) => (
+                <NoteCard key={note.id} note={note} onClick={() => setViewingNote(note)} />
+              ))}
+            </div>
+            {hasMore && (
+              <button
+                onClick={() => setShowAll(true)}
+                className="w-full mt-1 text-[12px] font-medium cursor-pointer text-center py-1 transition-opacity hover:opacity-70"
+                style={{ color: "var(--accent)" }}
               >
-                <span
-                  className="flex items-center justify-center shrink-0"
-                  style={{
-                    width: 28,
-                    height: 28,
-                    borderRadius: 7,
-                    background: NOTE_COLOR,
-                  }}
-                >
-                  <StickyNote size={15} color="white" strokeWidth={2} />
-                </span>
-                <div className="flex-1 min-w-0">
-                  <p
-                    style={{ color: "var(--text-primary)" }}
-                    className="text-[13px] font-medium leading-[1.4] tracking-[-0.01em] truncate"
-                  >
-                    {note.title}
-                  </p>
-                  <p
-                    style={{ color: "var(--text-secondary)" }}
-                    className="text-[11px] mt-0.5 tracking-[-0.01em]"
-                  >
-                    {dayjs(note.created_at).format("M月D日 HH:mm")}
-                  </p>
-                </div>
-              </motion.div>
-            ))}
-          </div>
+                查看全部 {notes.length} 条 →
+              </button>
+            )}
+          </>
         )}
       </div>
+
+      <ListModal title={`全部笔记 (${notes.length})`} open={showAll} onClose={() => setShowAll(false)}>
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+          {notes.map((note) => (
+            <NoteCard key={note.id} note={note} onClick={() => { setShowAll(false); setViewingNote(note); }} />
+          ))}
+        </div>
+      </ListModal>
 
       {viewingNote && (
         <NoteDetailModal

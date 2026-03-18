@@ -79,7 +79,18 @@ export default function MobileCalendarView({
     return map;
   }, [tasks]);
 
+  const notesByDate = useMemo(() => {
+    const map: Record<string, Task[]> = {};
+    for (const note of tasks.filter((t) => t.type === "note")) {
+      const key = dayjs(note.created_at).format("YYYY-MM-DD");
+      if (!map[key]) map[key] = [];
+      map[key].push(note);
+    }
+    return map;
+  }, [tasks]);
+
   const selectedTasks = selectedDate ? tasksByDate[selectedDate] || [] : [];
+  const selectedNotes = selectedDate ? notesByDate[selectedDate] || [] : [];
 
   // Load more past days — preserve scroll position
   const loadPast = useCallback(() => {
@@ -244,8 +255,8 @@ export default function MobileCalendarView({
                       /* Collapsed: icons only, horizontal */
                       <div className="flex flex-wrap items-center gap-1">
                         {dayTasks.slice(0, 6).map((task) => (
-                          <span key={task.id} style={{ opacity: task.status === "completed" ? 0.4 : 1 }}>
-                            <TaskIcon icon={task.icon} color={task.icon_color} size={iconSize} />
+                          <span key={task.id}>
+                            <TaskIcon icon={task.icon} color={task.icon_color} size={iconSize} done={task.status === "completed"} />
                           </span>
                         ))}
                         {dayTasks.length > 6 && (
@@ -263,13 +274,12 @@ export default function MobileCalendarView({
                             <div
                               key={task.id}
                               className="flex items-center gap-1.5 min-w-0"
-                              style={{ opacity: done ? 0.5 : 1 }}
                             >
-                              <TaskIcon icon={task.icon} color={task.icon_color} size={iconSize} />
+                              <TaskIcon icon={task.icon} color={task.icon_color} size={iconSize} done={done} />
                               <span
                                 className="text-[12px] font-medium leading-tight truncate"
                                 style={{
-                                  color: "var(--text-primary)",
+                                  color: "#999",
                                   textDecoration: done ? "line-through" : "none",
                                 }}
                               >
@@ -290,8 +300,8 @@ export default function MobileCalendarView({
                         {multiDay.length > 0 && (
                           <div className="flex flex-wrap items-center gap-1">
                             {multiDay.map((task) => (
-                              <span key={task.id} style={{ opacity: task.status === "completed" ? 0.4 : 1 }}>
-                                <TaskIcon icon={task.icon} color={task.icon_color} size={iconSize} />
+                              <span key={task.id}>
+                                <TaskIcon icon={task.icon} color={task.icon_color} size={iconSize} done={task.status === "completed"} />
                               </span>
                             ))}
                           </div>
@@ -309,6 +319,7 @@ export default function MobileCalendarView({
                 <DayDetailPopover
                   date={selectedDate}
                   tasks={selectedTasks}
+                  notes={selectedNotes}
                   onClose={() => setSelectedDate(null)}
                   onUpdateStatus={onUpdateStatus}
                   onDeleteTask={onDeleteTask}

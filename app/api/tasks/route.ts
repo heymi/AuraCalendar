@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDB, initDB, Task } from "@/lib/db";
 import { parseTaskInput } from "@/lib/ai";
-import { getCategoryStyle } from "@/lib/icons";
 import { getAuthUserId } from "@/lib/auth";
 import { v4 as uuidv4 } from "uuid";
 import dayjs from "dayjs";
@@ -50,14 +49,13 @@ export async function POST(req: NextRequest) {
   }
 
   const isNote = type === "note";
-  const style = isNote ? null : getCategoryStyle(parsed.category);
 
   const task = {
     id: uuidv4(),
     title: parsed.title,
     original_input: input || null,
-    icon: isNote ? "note" : parsed.category,
-    icon_color: isNote ? "#F59E0B" : style!.color,
+    icon: isNote ? "📝" : (parsed.icon || parsed.emoji || "📌"),
+    icon_color: isNote ? "#F59E0B" : (parsed.icon_color || parsed.color || "#94A3B8"),
     start_date: parsed.start_date || "",
     end_date: parsed.end_date || null,
     notes: isNote ? (parsed.content || "") : "",

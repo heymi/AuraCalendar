@@ -2,16 +2,19 @@
 
 import { useState, useRef, useLayoutEffect, useCallback } from "react";
 import { motion } from "framer-motion";
-import { X } from "lucide-react";
+import { X, StickyNote } from "lucide-react";
 import dayjs from "dayjs";
 import { Task } from "@/lib/db";
 import { useIsMobile } from "@/hooks/useIsMobile";
 import TaskItem from "./TaskItem";
 import EditTaskModal from "./EditTaskModal";
+import NoteDetailModal from "./NoteDetailModal";
+import NoteCard from "@/components/sidebar/NoteCard";
 
 interface DayDetailPopoverProps {
   date: string;
   tasks: Task[];
+  notes?: Task[];
   onClose: () => void;
   onUpdateStatus: (id: string, status: string) => Promise<void>;
   onDeleteTask: (id: string) => Promise<void>;
@@ -21,6 +24,7 @@ interface DayDetailPopoverProps {
 export default function DayDetailPopover({
   date,
   tasks,
+  notes = [],
   onClose,
   onUpdateStatus,
   onDeleteTask,
@@ -28,6 +32,7 @@ export default function DayDetailPopover({
 }: DayDetailPopoverProps) {
   const d = dayjs(date);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
+  const [viewingNote, setViewingNote] = useState<Task | null>(null);
   const [expanded, setExpanded] = useState(false);
   const isMobile = useIsMobile();
   const popoverRef = useRef<HTMLDivElement>(null);
@@ -58,6 +63,10 @@ export default function DayDetailPopover({
     setTopPx(offsetTop);
   }, [isMobile, date, tasks.length]);
 
+  const singleDayTasks = tasks.filter(
+    (t) => !t.end_date || t.end_date === t.start_date
+  );
+
   const header = (
     <div className="flex items-start justify-between mb-3">
       <div>
@@ -71,7 +80,7 @@ export default function DayDetailPopover({
           style={{ color: "var(--text-secondary)" }}
           className="text-[11px] mt-0.5 tracking-[-0.01em]"
         >
-          {d.format("dddd")} · {tasks.length} 个任务
+          {d.format("dddd")} · {singleDayTasks.length} 个任务{notes.length > 0 ? ` · ${notes.length} 条笔记` : ""}
         </p>
       </div>
       <button
@@ -84,24 +93,60 @@ export default function DayDetailPopover({
     </div>
   );
 
-  const taskList = tasks.length === 0 ? (
+  const isEmpty = singleDayTasks.length === 0 && notes.length === 0;
+
+  const contentList = isEmpty ? (
     <p
       style={{ color: "var(--text-tertiary)" }}
       className="text-[13px] text-center py-6"
     >
-      暂无任务
+      暂无内容
     </p>
   ) : (
-    <div className="flex flex-col gap-1.5 sm:max-h-[280px] overflow-y-auto -mx-1 px-1">
-      {[...tasks].sort((a, b) => (a.created_at < b.created_at ? 1 : -1)).map((task) => (
-        <TaskItem
-          key={task.id}
-          task={task}
-          onUpdateStatus={onUpdateStatus}
-          onDelete={onDeleteTask}
-          onEdit={setEditingTask}
-        />
-      ))}
+    <div className="sm:max-h-[360px] overflow-y-auto -mx-1 px-1" style={{ scrollbarWidth: "none" }}>
+      {singleDayTasks.length > 0 && (
+        <div className="flex flex-col gap-1.5">
+          {[...singleDayTasks].sort((a, b) => (a.created_at < b.created_at ? 1 : -1)).map((task) => (
+            <TaskItem
+              key={task.id}
+              task={task}
+              onUpdateStatus={onUpdateStatus}
+              onDelete={onDeleteTask}
+              onEdit={setEditingTask}
+            />
+          ))}
+        </div>
+      )}
+
+      {notes.length > 0 && (
+        <>
+          {singleDayTasks.length > 0 && (
+            <div
+              style={{ background: "var(--border-subtle)" }}
+              className="h-px my-3"
+            />
+          )}
+          <div className="flex items-center gap-1.5 mb-2">
+            <StickyNote size={12} style={{ color: "#F59E0B" }} strokeWidth={2} />
+            <span
+              style={{ color: "var(--text-secondary)" }}
+              className="text-[11px] font-medium"
+            >
+              笔记
+            </span>
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            {notes.map((note) => (
+              <NoteCard
+                key={note.id}
+                note={note}
+                onClick={() => setViewingNote(note)}
+                compact
+              />
+            ))}
+          </div>
+        </>
+      )}
     </div>
   );
 
@@ -116,7 +161,7 @@ export default function DayDetailPopover({
           exit={{ opacity: 0 }}
           transition={{ duration: 0.2 }}
           className="fixed inset-0 z-50"
-          style={{ backdropFilter: "blur(10px)", WebkitBackdropFilter: "blur(10px)" }}
+          style={{}}
         >
           {/* Backdrop */}
           <div
@@ -157,7 +202,7 @@ export default function DayDetailPopover({
               />
             </button>
             <div className="shrink-0">{header}</div>
-            <div className="flex-1 overflow-y-auto min-h-0">{taskList}</div>
+            <div className="flex-1 overflow-y-auto min-h-0">{contentList}</div>
           </motion.div>
         </motion.div>
       ) : (
@@ -178,10 +223,10 @@ export default function DayDetailPopover({
             top: topPx,
             ...(side === "right" ? { left: "calc(100% + 8px)" } : { right: "calc(100% + 8px)" }),
           }}
-          className="absolute z-50 w-[280px] sm:w-[320px] rounded-[16px] p-4"
+          className="absolute z-50 w-[340px] sm:w-[384px] rounded-[20px] pt-7 px-7 pb-9"
         >
           {header}
-          {taskList}
+          {contentList}
         </motion.div>
       )}
 
@@ -193,6 +238,19 @@ export default function DayDetailPopover({
           onSave={async (id, fields) => {
             await onUpdateTask(id, fields);
             setEditingTask(null);
+          }}
+        />
+      )}
+
+      {/* Note detail overlay */}
+      {viewingNote && (
+        <NoteDetailModal
+          note={viewingNote}
+          onClose={() => setViewingNote(null)}
+          onDelete={onDeleteTask}
+          onSave={async (id, fields) => {
+            await onUpdateTask(id, fields);
+            setViewingNote(null);
           }}
         />
       )}
