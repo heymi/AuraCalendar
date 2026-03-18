@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState, useEffect, useCallback } fr
 import * as SecureStore from "expo-secure-store";
 import * as WebBrowser from "expo-web-browser";
 import { makeRedirectUri, useAuthRequest } from "expo-auth-session";
-import { Platform } from "react-native";
+import { configure } from "@aura/shared/api-client";
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -61,6 +61,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     discovery
   );
 
+  // Configure API client whenever token changes
+  useEffect(() => {
+    if (token) {
+      configure(API_BASE, token);
+    }
+  }, [token]);
+
   // Restore session on mount
   useEffect(() => {
     (async () => {
@@ -68,6 +75,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const savedToken = await SecureStore.getItemAsync(TOKEN_KEY);
         const savedUser = await SecureStore.getItemAsync(USER_KEY);
         if (savedToken && savedUser) {
+          configure(API_BASE, savedToken);
           setToken(savedToken);
           setUser(JSON.parse(savedUser));
         }
@@ -81,27 +89,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Handle OAuth response
   useEffect(() => {
-    console.log("[Auth] OAuth response:", response?.type, response?.type === "success" ? response.params : "");
     if (response?.type === "success") {
       const { code } = response.params;
       if (code) {
         exchangeCode(code, request?.codeVerifier);
-      } else {
-        console.error("[Auth] No code in response params:", response.params);
       }
     }
   }, [response]);
 
   const exchangeCode = async (code: string, codeVerifier?: string) => {
     try {
-      console.log("[Auth] Exchanging code with:", `${API_BASE}/api/auth/mobile`);
       const res = await fetch(`${API_BASE}/api/auth/mobile`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ code, code_verifier: codeVerifier }),
       });
       const data = await res.json();
-      console.log("[Auth] Exchange response:", res.status, JSON.stringify(data));
       if (data.token && data.user) {
         await SecureStore.setItemAsync(TOKEN_KEY, data.token);
         await SecureStore.setItemAsync(USER_KEY, JSON.stringify(data.user));
