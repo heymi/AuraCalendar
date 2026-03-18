@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useLayoutEffect, useCallback } from "react";
 import { motion } from "framer-motion";
 import { X } from "lucide-react";
 import dayjs from "dayjs";
@@ -30,6 +30,33 @@ export default function DayDetailPopover({
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [expanded, setExpanded] = useState(false);
   const isMobile = useIsMobile();
+  const popoverRef = useRef<HTMLDivElement>(null);
+  const [side, setSide] = useState<"left" | "right">("right");
+  const [topPx, setTopPx] = useState(0);
+
+  useLayoutEffect(() => {
+    const el = popoverRef.current;
+    if (!el || isMobile) return;
+    const parent = el.offsetParent as HTMLElement | null;
+    if (!parent) return;
+    const parentRect = parent.getBoundingClientRect();
+    const elRect = el.getBoundingClientRect();
+    const pad = 8;
+
+    // Pick side with more space
+    const spaceRight = window.innerWidth - parentRect.right;
+    const spaceLeft = parentRect.left;
+    const newSide = spaceRight >= spaceLeft ? "right" : "left";
+
+    // Vertically center on parent, then clamp to viewport
+    const parentMidY = parentRect.top + parentRect.height / 2;
+    let idealTop = parentMidY - elRect.height / 2;
+    idealTop = Math.max(pad, Math.min(idealTop, window.innerHeight - elRect.height - pad));
+    const offsetTop = idealTop - parentRect.top;
+
+    setSide(newSide);
+    setTopPx(offsetTop);
+  }, [isMobile, date, tasks.length]);
 
   const header = (
     <div className="flex items-start justify-between mb-3">
@@ -66,7 +93,7 @@ export default function DayDetailPopover({
     </p>
   ) : (
     <div className="flex flex-col gap-1.5 sm:max-h-[280px] overflow-y-auto -mx-1 px-1">
-      {tasks.map((task) => (
+      {[...tasks].sort((a, b) => (a.created_at < b.created_at ? 1 : -1)).map((task) => (
         <TaskItem
           key={task.id}
           task={task}
@@ -134,12 +161,13 @@ export default function DayDetailPopover({
           </motion.div>
         </motion.div>
       ) : (
-        /* Desktop: absolute popover */
+        /* Desktop: absolute popover, centered on card, auto left/right */
         <motion.div
+          ref={popoverRef}
           data-popover
-          initial={{ opacity: 0, scale: 0.95, y: -4 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.95, y: -4 }}
+          initial={{ opacity: 0, scale: 0.95, x: side === "right" ? -6 : 6 }}
+          animate={{ opacity: 1, scale: 1, x: 0 }}
+          exit={{ opacity: 0, scale: 0.95, x: side === "right" ? -6 : 6 }}
           transition={{ type: "spring", damping: 28, stiffness: 380 }}
           style={{
             background: "var(--surface-elevated)",
@@ -147,8 +175,8 @@ export default function DayDetailPopover({
             WebkitBackdropFilter: "blur(24px) saturate(180%)",
             border: "1px solid var(--border)",
             boxShadow: "var(--shadow-xl)",
-            left: "100%",
-            bottom: "100%",
+            top: topPx,
+            ...(side === "right" ? { left: "calc(100% + 8px)" } : { right: "calc(100% + 8px)" }),
           }}
           className="absolute z-50 w-[280px] sm:w-[320px] rounded-[16px] p-4"
         >
