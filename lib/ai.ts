@@ -43,14 +43,14 @@ export async function parseTaskInput(input: string): Promise<ParsedTask[]> {
 4. category: 从以下分类中选一个最匹配的：${categories}
 
 规则：
-- 如果没有提到具体日期，默认为今天
+- 如果没有提到任何具体日期（今天、明天、下周X、X号等），start_date 设为 null（表示收件箱任务）
 - "下周X" 表示下一个周X
 - "X号" 表示本月X号
 - "明天" 表示 ${dayjs().add(1, "day").format("YYYY-MM-DD")}
 - 日期范围如"20号到25号"应设置 start_date 和 end_date
 
 只返回 JSON 数组，不要其他内容：
-[{"title": "...", "start_date": "YYYY-MM-DD", "end_date": "YYYY-MM-DD or null", "category": "..."}, ...]`;
+[{"title": "...", "start_date": "YYYY-MM-DD or null", "end_date": "YYYY-MM-DD or null", "category": "..."}, ...]`;
 
   const res = await fetch(DEEPSEEK_API_URL, {
     method: "POST",
@@ -115,7 +115,7 @@ export async function parseNoteInput(input: string): Promise<ParsedNoteResult> {
 
 每条 task 提取：
 - title: 精炼的任务标题
-- start_date: 格式 YYYY-MM-DD（默认今天）
+- start_date: 格式 YYYY-MM-DD，如果没提到具体日期则为 null
 - end_date: 格式 YYYY-MM-DD 或 null
 - category: 从上述分类中选一个
 

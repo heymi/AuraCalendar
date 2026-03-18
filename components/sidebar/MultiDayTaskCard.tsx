@@ -53,6 +53,7 @@ export default function MultiDayTaskCard({
   const cfg = STATUS_CONFIG[task.status];
 
   const getDatesInRange = () => {
+    if (!task.start_date) return [];
     const dates: string[] = [];
     const start = dayjs(task.start_date);
     const end = task.end_date ? dayjs(task.end_date) : start;
