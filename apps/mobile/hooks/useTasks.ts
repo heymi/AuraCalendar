@@ -10,9 +10,10 @@ export function useTasks(monthKey: string) {
   const fetchTasks = useCallback(async () => {
     try {
       const data = await api.fetchTasks(monthKey);
+      console.log("[useTasks] fetched", Array.isArray(data) ? data.length : 0, "tasks for", monthKey);
       setTasks(Array.isArray(data) ? data : []);
     } catch (err) {
-      console.error("Failed to fetch tasks:", err);
+      console.error("[useTasks] Failed to fetch tasks:", err);
     } finally {
       if (!initialized.current) {
         initialized.current = true;
@@ -29,9 +30,10 @@ export function useTasks(monthKey: string) {
 
   const createBatch = useCallback(
     async (input: string, parsedList: object[]) => {
-      await Promise.all(
+      const results = await Promise.all(
         parsedList.map((parsed) => api.createTask(input, parsed))
       );
+      console.log("[useTasks] created tasks:", results.map((r) => r.task?.id));
       await fetchTasks();
     },
     [fetchTasks]

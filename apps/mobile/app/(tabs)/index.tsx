@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from "react";
-import { View, StyleSheet } from "react-native";
+import { StyleSheet } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import * as Haptics from "expo-haptics";
@@ -8,8 +8,7 @@ import { useCalendar } from "../../hooks/useCalendar";
 import { useTasks } from "../../hooks/useTasks";
 import { CalendarList } from "../../components/CalendarGrid";
 import { DayDetailSheet } from "../../components/DayDetailSheet";
-import { FAB } from "../../components/FAB";
-import { CreateTaskSheet } from "../../components/CreateTaskSheet";
+import { BottomInputBar } from "../../components/BottomInputBar";
 import { useTheme } from "../../lib/theme";
 import { parseInput } from "../../lib/api";
 
@@ -17,10 +16,9 @@ export default function CalendarScreen() {
   const theme = useTheme();
   const router = useRouter();
   const { monthKey } = useCalendar();
-  const { tasks, loading, fetchTasks, createBatch, createNote, updateStatus, deleteTask } =
+  const { tasks, fetchTasks, createBatch, createNote, updateStatus, deleteTask } =
     useTasks(monthKey);
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
-  const [showCreate, setShowCreate] = useState(false);
 
   const handleDayPress = useCallback((date: string) => {
     Haptics.selectionAsync();
@@ -51,7 +49,11 @@ export default function CalendarScreen() {
         refreshing={false}
       />
 
-      <FAB onPress={() => setShowCreate(true)} />
+      <BottomInputBar
+        onCreateBatch={createBatch}
+        onCreateNote={createNote}
+        parseInput={parseInput}
+      />
 
       {selectedDate && (
         <DayDetailSheet
@@ -61,15 +63,6 @@ export default function CalendarScreen() {
           onToggle={updateStatus}
           onPress={handleTaskPress}
           onDelete={deleteTask}
-        />
-      )}
-
-      {showCreate && (
-        <CreateTaskSheet
-          onClose={() => setShowCreate(false)}
-          onCreateBatch={createBatch}
-          onCreateNote={createNote}
-          parseInput={parseInput}
         />
       )}
     </SafeAreaView>
