@@ -25,6 +25,7 @@ import type { Task } from "@aura/shared/types";
 import { GlassView } from "expo-glass-effect";
 import { TaskIcon } from "./TaskIcon";
 import { useTheme, type Theme } from "../lib/theme";
+import { useTabBarHeight } from "../lib/tab-bar-height";
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
@@ -135,9 +136,13 @@ function DayCard({
   const singleDay = item.tasks.filter(
     (t) => !t.end_date || t.end_date === t.start_date
   );
-  const multiDay = item.tasks.filter(
-    (t) => t.end_date && t.end_date !== t.start_date
-  );
+  const multiDay = item.tasks
+    .filter((t) => t.end_date && t.end_date !== t.start_date)
+    .sort((a, b) => {
+      const aDone = a.status === "completed" ? 1 : 0;
+      const bDone = b.status === "completed" ? 1 : 0;
+      return aDone - bDone;
+    });
 
   const maxVisible = isCompact ? 2 : 4;
   const iconSize = isCompact ? 16 : 20;
@@ -258,7 +263,7 @@ function DayCard({
                         style={[
                           styles.taskTitle,
                           {
-                            color: "#999",
+                            color: done ? theme.textTertiary : theme.text,
                             textDecorationLine: done ? "line-through" : "none",
                           },
                         ]}
@@ -340,6 +345,8 @@ const ESTIMATED_ITEM_HEIGHT = 74;
 
 export function CalendarList({ tasks, onDayPress, onRefresh, refreshing }: CalendarListProps) {
   const theme = useTheme();
+  const { tabBarHeight } = useTabBarHeight();
+  const bottomInset = tabBarHeight + 16;
   const flatListRef = useRef<FlatList>(null);
   const [pastCount, setPastCount] = useState(14);
   const [futureCount, setFutureCount] = useState(30);
@@ -406,7 +413,7 @@ export function CalendarList({ tasks, onDayPress, onRefresh, refreshing }: Calen
         data={days}
         keyExtractor={(item) => item.date}
         renderItem={renderItem}
-        contentContainerStyle={styles.listContent}
+        contentContainerStyle={{ paddingHorizontal: 12, paddingBottom: bottomInset }}
         initialScrollIndex={Math.max(todayIndex - 1, 0)}
         getItemLayout={(_, index) => ({
           length: ESTIMATED_ITEM_HEIGHT,
@@ -438,7 +445,7 @@ export function CalendarList({ tasks, onDayPress, onRefresh, refreshing }: Calen
         <Animated.View
           entering={ZoomIn.springify().stiffness(SPRING_FAB.stiffness).damping(SPRING_FAB.damping)}
           exiting={ZoomOut.duration(200)}
-          style={styles.todayFab}
+          style={[styles.todayFab, { bottom: bottomInset + 10 }]}
         >
           <Pressable
             onPress={scrollToToday}
@@ -464,7 +471,6 @@ const styles = StyleSheet.create({
   },
   listContent: {
     paddingHorizontal: 12,
-    paddingBottom: 100,
   },
   monthLabel: {
     paddingTop: 16,
@@ -534,7 +540,7 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   taskTitle: {
-    fontSize: 12,
+    fontSize: 14,
     fontWeight: "500",
     flexShrink: 1,
   },
@@ -552,7 +558,6 @@ const styles = StyleSheet.create({
   },
   todayFab: {
     position: "absolute",
-    bottom: 100,
     alignSelf: "center",
     zIndex: 10,
   },

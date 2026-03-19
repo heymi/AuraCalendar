@@ -1,30 +1,47 @@
-import React, { useState, useMemo, useCallback } from "react";
-import { View, Text, FlatList, StyleSheet, Dimensions, RefreshControl } from "react-native";
+import React, { useMemo, useCallback, useState } from "react";
+import { View, Text, FlatList, StyleSheet, Dimensions, RefreshControl, Pressable } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
+import { SymbolView } from "expo-symbols";
+import * as Haptics from "expo-haptics";
 import type { Task } from "@aura/shared/types";
 import { useCalendar } from "../../hooks/useCalendar";
 import { useTasks } from "../../hooks/useTasks";
 import { NoteCard } from "../../components/NoteCard";
-import { FAB } from "../../components/FAB";
-import { CreateTaskSheet } from "../../components/CreateTaskSheet";
+import { BottomInputBar } from "../../components/BottomInputBar";
 import { useTheme } from "../../lib/theme";
+import { useTabBarHeight } from "../../lib/tab-bar-height";
 import { parseInput } from "../../lib/api";
 
 const SCREEN_WIDTH = Dimensions.get("window").width;
 const CARD_WIDTH = (SCREEN_WIDTH - 48) / 2;
+const INITIAL_COUNT = 20;
+const PAGE_SIZE = 20;
 
 export default function NotesScreen() {
   const theme = useTheme();
   const router = useRouter();
   const { monthKey } = useCalendar();
+  const { tabBarHeight } = useTabBarHeight();
   const { tasks, loading, fetchTasks, createBatch, createNote } = useTasks(monthKey);
-  const [showCreate, setShowCreate] = useState(false);
+  const [visibleCount, setVisibleCount] = useState(INITIAL_COUNT);
 
-  const notes = useMemo(
+  const allNotes = useMemo(
     () => tasks.filter((t) => t.type === "note").reverse(),
     [tasks]
   );
+
+  const notes = useMemo(
+    () => allNotes.slice(0, visibleCount),
+    [allNotes, visibleCount]
+  );
+
+  const remainingCount = allNotes.length - notes.length;
+
+  const loadMore = useCallback(() => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setVisibleCount((c) => c + PAGE_SIZE);
+  }, []);
 
   const handleNotePress = useCallback(
     (note: Task) => {
@@ -32,6 +49,8 @@ export default function NotesScreen() {
     },
     [router]
   );
+
+  const BOTTOM_INSET = tabBarHeight + 16;
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]} edges={["left", "right"]}>
@@ -46,20 +65,33 @@ export default function NotesScreen() {
           </View>
         )}
         ListHeaderComponent={
-          notes.length > 0 ? (
+          allNotes.length > 0 ? (
             <View style={styles.countHeader}>
               <View style={{ flex: 1 }} />
               <Text style={[styles.countText, { color: theme.textSecondary }]}>
-                {notes.length} 条笔记
+                {allNotes.length} 条笔记
               </Text>
+            </View>
+          ) : null
+        }
+        ListFooterComponent={
+          remainingCount > 0 ? (
+            <View style={styles.footerContainer}>
+              <Pressable
+                onPress={loadMore}
+                style={[styles.footerButton, { backgroundColor: theme.surface, borderColor: theme.borderSubtle }]}
+              >
+                <SymbolView name="chevron.down" size={10} tintColor={theme.accent} />
+                <Text style={[styles.footerText, { color: theme.accent }]}>
+                  加载更多 ({remainingCount})
+                </Text>
+              </Pressable>
             </View>
           ) : null
         }
         ListEmptyComponent={
           <View style={styles.empty}>
-            <Text style={styles.emptyIcon}>
-              🗒️
-            </Text>
+            <SymbolView name="square.and.pencil" size={40} tintColor={theme.textTertiary} />
             <Text style={[styles.emptyTitle, { color: theme.textSecondary }]}>
               {loading ? "加载中..." : "暂无笔记"}
             </Text>
@@ -70,7 +102,7 @@ export default function NotesScreen() {
             )}
           </View>
         }
-        contentContainerStyle={styles.listContent}
+        contentContainerStyle={{ paddingTop: 12, paddingBottom: BOTTOM_INSET }}
         refreshControl={
           <RefreshControl
             refreshing={false}
@@ -80,16 +112,11 @@ export default function NotesScreen() {
         }
       />
 
-      <FAB onPress={() => setShowCreate(true)} />
-
-      {showCreate && (
-        <CreateTaskSheet
-          onClose={() => setShowCreate(false)}
-          onCreateBatch={createBatch}
-          onCreateNote={createNote}
-          parseInput={parseInput}
-        />
-      )}
+      <BottomInputBar
+        onCreateBatch={createBatch}
+        onCreateNote={createNote}
+        parseInput={parseInput}
+      />
     </SafeAreaView>
   );
 }
@@ -115,9 +142,22 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     letterSpacing: -0.1,
   },
-  listContent: {
-    paddingTop: 12,
-    paddingBottom: 80,
+  footerContainer: {
+    alignItems: "center",
+    paddingVertical: 12,
+  },
+  footerButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    paddingHorizontal: 14,
+    paddingVertical: 7,
+    borderRadius: 16,
+    borderWidth: StyleSheet.hairlineWidth,
+  },
+  footerText: {
+    fontSize: 13,
+    fontWeight: "500",
   },
   empty: {
     paddingVertical: 80,
@@ -125,11 +165,8 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     gap: 6,
   },
-  emptyIcon: {
-    fontSize: 32,
-    marginBottom: 8,
-  },
   emptyTitle: {
+    marginTop: 8,
     fontSize: 16,
     fontWeight: "600",
     letterSpacing: -0.2,
