@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import jwt from "jsonwebtoken";
-import { getDB, initDB } from "@/lib/db";
 
 const JWT_SECRET = process.env.AUTH_SECRET!;
 
@@ -56,12 +55,6 @@ export async function POST(req: NextRequest) {
   const ghUser = await userRes.json();
   const userId = String(ghUser.id);
 
-  // Ensure DB is initialized
-  await initDB();
-  const db = getDB();
-
-  // Check if user has any tasks (basic existence check)
-  // No separate users table — user_id is stored on tasks directly
   const token = jwt.sign(
     {
       userId,
