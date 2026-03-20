@@ -52,6 +52,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   const redirectUri = makeRedirectUri({ scheme: "auracalendar" });
+  const exchangingRef = useRef(false);
 
   const [request, response, promptAsync] = useAuthRequest(
     {
@@ -98,8 +99,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, [response]);
 
-  const exchangingRef = useRef(false);
-
   const exchangeCode = async (code: string, codeVerifier?: string) => {
     if (exchangingRef.current) return;
     exchangingRef.current = true;
@@ -109,11 +108,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.log("[Auth] Exchanging code at:", url);
       console.log("[Auth] redirectUri:", redirectUri);
 
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 15_000);
+
       const res = await fetch(url, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ code, code_verifier: codeVerifier }),
+        signal: controller.signal,
       });
+
+      clearTimeout(timeout);
 
       if (!res.ok) {
         const text = await res.text();
