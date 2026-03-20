@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from "react";
+import { Alert } from "react-native";
 import * as SecureStore from "expo-secure-store";
 import * as WebBrowser from "expo-web-browser";
 import { makeRedirectUri, useAuthRequest } from "expo-auth-session";
@@ -97,22 +98,50 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, [response]);
 
+  const exchangingRef = useRef(false);
+
   const exchangeCode = async (code: string, codeVerifier?: string) => {
+    if (exchangingRef.current) return;
+    exchangingRef.current = true;
+
     try {
-      const res = await fetch(`${API_BASE}/api/auth/mobile`, {
+      const url = `${API_BASE}/api/auth/mobile`;
+      console.log("[Auth] Exchanging code at:", url);
+      console.log("[Auth] redirectUri:", redirectUri);
+
+      const res = await fetch(url, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ code, code_verifier: codeVerifier }),
       });
-      const data = await res.json();
-      if (data.token && data.user) {
-        await SecureStore.setItemAsync(TOKEN_KEY, data.token);
-        await SecureStore.setItemAsync(USER_KEY, JSON.stringify(data.user));
-        setToken(data.token);
-        setUser(data.user);
+
+      if (!res.ok) {
+        const text = await res.text();
+        console.error("[Auth] Exchange HTTP error:", res.status, text);
+        Alert.alert("Login Failed", `Server error ${res.status}: ${text}`);
+        return;
       }
+
+      const data = await res.json();
+
+      if (!data.token || !data.user) {
+        console.error("[Auth] Invalid response:", JSON.stringify(data));
+        Alert.alert("Login Failed", data.error ?? "Invalid server response");
+        return;
+      }
+
+      await SecureStore.setItemAsync(TOKEN_KEY, data.token);
+      await SecureStore.setItemAsync(USER_KEY, JSON.stringify(data.user));
+      setToken(data.token);
+      setUser(data.user);
     } catch (err) {
       console.error("[Auth] Exchange failed:", err);
+      Alert.alert(
+        "Login Failed",
+        `Network error: ${err instanceof Error ? err.message : String(err)}\n\nAPI: ${API_BASE}`
+      );
+    } finally {
+      exchangingRef.current = false;
     }
   };
 
