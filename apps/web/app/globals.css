@@ -111,7 +111,6 @@
   --color-warning: var(--warning);
   --color-danger: var(--danger);
   --font-sans: var(--font-geist-sans);
-  --breakpoint-wide: 100rem;
 }
 
 /* ── Base ────────────────────────────────────────────── */
@@ -185,6 +184,16 @@ body {
   height: 1px;
   background: var(--border-subtle);
   margin: 16px 0;
+}
+
+/* ── Sidebar responsive ────────────────────────────── */
+.sidebar-split { display: none; }
+.sidebar-combined { display: none; }
+@media (min-width: 1024px) and (max-width: 1599px) {
+  .sidebar-combined { display: flex; }
+}
+@media (min-width: 1600px) {
+  .sidebar-split { display: flex; }
 }
 
 /* ── Safe area ──────────────────────────────────────── */

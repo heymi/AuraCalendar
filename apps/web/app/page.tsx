@@ -69,8 +69,8 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Wide screen: two separate panels */}
-        <div className="hidden 2lg:flex flex-col shrink-0 pt-0.5 gap-4 w-[280px] min-w-[240px]">
+        {/* Wide screen (≥1600px): two separate panels */}
+        <div className="sidebar-split flex-col shrink-0 pt-0.5 gap-4 w-[280px] min-w-[240px]">
           <MultiDayPanel
             tasks={tasks}
             onHighlight={highlight}
@@ -79,7 +79,7 @@ export default function Home() {
             onUpdateStatus={updateStatus}
           />
         </div>
-        <div className="hidden 2lg:flex flex-col shrink-0 pt-0.5 gap-4 w-[280px] min-w-[240px]">
+        <div className="sidebar-split flex-col shrink-0 pt-0.5 gap-4 w-[280px] min-w-[240px]">
           <NotesPanel
             tasks={tasks}
             onUpdateTask={updateTask}
@@ -88,7 +88,7 @@ export default function Home() {
         </div>
 
         {/* Medium screen (1024–1599px): combined sidebar */}
-        <div className="hidden lg:flex 2lg:hidden flex-col shrink-0 pt-0.5 w-[280px] min-w-[240px]">
+        <div className="sidebar-combined flex-col shrink-0 pt-0.5 w-[280px] min-w-[240px]">
           <CombinedSidebar
             tasks={tasks}
             onHighlight={highlight}
