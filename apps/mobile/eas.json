@@ -1,24 +1,36 @@
 {
   "cli": {
-    "version": ">= 15.0.0"
+    "version": ">= 16.0.1",
+    "appVersionSource": "remote"
   },
   "build": {
     "development": {
       "developmentClient": true,
       "distribution": "internal"
     },
+    "development:testflight": {
+      "developmentClient": true,
+      "distribution": "store",
+      "autoIncrement": true
+    },
     "preview": {
       "distribution": "internal"
     },
-    "production": {}
+    "preview:testflight": {
+      "distribution": "store",
+      "autoIncrement": true,
+      "env": {
+        "EXPO_PUBLIC_API_BASE": "https://auratask.aedc.cc",
+        "EXPO_PUBLIC_GITHUB_CLIENT_ID": "Ov23liWcRf74BgPeLc5X"
+      }
+    },
+    "production": {
+      "autoIncrement": true
+    }
   },
   "submit": {
-    "production": {
-      "ios": {
-        "appleId": "",
-        "ascAppId": "",
-        "appleTeamId": ""
-      }
-    }
+    "production": {},
+    "preview:testflight": {},
+    "development:testflight": {}
   }
 }
