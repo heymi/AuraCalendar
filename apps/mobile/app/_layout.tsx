@@ -44,6 +44,13 @@ export default function RootLayout() {
                 presentation: "card",
               }}
             />
+            <Stack.Screen
+              name="settings"
+              options={{
+                title: "设置",
+                presentation: "card",
+              }}
+            />
           </Stack>
         </ThemeProvider>
       </AuthProvider>

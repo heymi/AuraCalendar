@@ -7,7 +7,7 @@ import {
   StyleSheet,
   type LayoutChangeEvent,
 } from "react-native";
-import { Tabs, useRouter } from "expo-router";
+import { Tabs, useRouter, Link } from "expo-router";
 import { SymbolView } from "expo-symbols";
 import { GlassView } from "expo-glass-effect";
 import Animated, {
@@ -253,6 +253,17 @@ export default function TabLayout() {
             name="index"
             options={{
               title: "日历",
+              headerRight: () => (
+                <Link href={"/settings" as never} asChild>
+                  <Pressable style={{ marginRight: 16 }} hitSlop={8}>
+                    <SymbolView
+                      name="gearshape"
+                      tintColor={theme.textSecondary}
+                      size={22}
+                    />
+                  </Pressable>
+                </Link>
+              ),
               tabBarIcon: ({ focused }) => (
                 <TabIcon name="calendar" focused={focused} theme={theme} />
               ),
