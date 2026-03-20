@@ -14,6 +14,7 @@ interface MultiDayTaskCardProps {
   onEdit: (task: Task) => void;
   onUpdateStatus: (id: string, status: string) => Promise<void>;
   layoutPrefix?: string;
+  compact?: boolean;
 }
 
 const STATUS_CYCLE: Record<string, string> = {
@@ -50,6 +51,7 @@ export default function MultiDayTaskCard({
   onEdit,
   onUpdateStatus,
   layoutPrefix = "sidebar",
+  compact = false,
 }: MultiDayTaskCardProps) {
   const [cycling, setCycling] = useState(false);
   const cfg = STATUS_CONFIG[task.status];
@@ -90,7 +92,7 @@ export default function MultiDayTaskCard({
         background: "var(--surface)",
         border: "1px solid var(--border-subtle)",
       }}
-      className="flex items-center gap-2.5 px-3 py-2.5 rounded-[14px] cursor-pointer transition-shadow hover:shadow-[var(--shadow-sm)]"
+      className={`flex items-center rounded-[14px] cursor-pointer transition-shadow hover:shadow-[var(--shadow-sm)] ${compact ? "gap-2 px-2 py-1.5" : "gap-2.5 px-3 py-2.5"}`}
     >
       {/* Status circle */}
       <motion.button
@@ -119,7 +121,7 @@ export default function MultiDayTaskCard({
       </motion.button>
 
       {/* Category icon */}
-      <TaskIcon icon={task.icon} color={task.icon_color} size={24} done={task.status === "completed"} />
+      <TaskIcon icon={task.icon} color={task.icon_color} size={compact ? 20 : 24} done={task.status === "completed"} />
 
       <div className="flex-1 min-w-0">
         <p
@@ -127,16 +129,18 @@ export default function MultiDayTaskCard({
             color: task.status === "completed" ? "var(--text-secondary)" : "var(--text-primary)",
             textDecoration: task.status === "completed" ? "line-through" : "none",
           }}
-          className="text-[13px] font-medium leading-[1.4] tracking-[-0.01em] transition-colors duration-200"
+          className={`${compact ? "text-[12px]" : "text-[13px]"} font-medium leading-[1.4] tracking-[-0.01em] transition-colors duration-200`}
         >
           {task.title}
         </p>
-        <p
-          style={{ color: "var(--text-secondary)" }}
-          className="text-[11px] mt-0.5 tracking-[-0.01em]"
-        >
-          {formatDateRange(task.start_date, task.end_date)}
-        </p>
+        {!compact && (
+          <p
+            style={{ color: "var(--text-secondary)" }}
+            className="text-[11px] mt-0.5 tracking-[-0.01em]"
+          >
+            {formatDateRange(task.start_date, task.end_date)}
+          </p>
+        )}
       </div>
     </motion.div>
   );
