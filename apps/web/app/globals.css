@@ -111,7 +111,7 @@
   --color-warning: var(--warning);
   --color-danger: var(--danger);
   --font-sans: var(--font-geist-sans);
-  --breakpoint-2lg: 1600px;
+  --breakpoint-wide: 100rem;
 }
 
 /* ── Base ────────────────────────────────────────────── */
